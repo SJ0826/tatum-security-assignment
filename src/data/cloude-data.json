@@ -4,8 +4,8 @@
     "provider": "AWS",
     "name": "Production AWS Account",
     "cloudGroupName": [
-      "production",
-      "critical"
+      "AWS-Group",
+      "PROD-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": true,
@@ -16,6 +16,7 @@
       "minute": "0"
     },
     "regionList": [
+      "global",
       "us-east-1",
       "us-west-2",
       "ap-northeast-2"
@@ -35,8 +36,8 @@
     "provider": "AZURE",
     "name": "Development Azure Subscription",
     "cloudGroupName": [
-      "development",
-      "non-production"
+      "AZURE-Group",
+      "DEV-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": false,
@@ -48,6 +49,7 @@
       "minute": "30"
     },
     "regionList": [
+      "global",
       "eastus",
       "westeurope",
       "koreacentral"
@@ -68,13 +70,14 @@
     "provider": "GCP",
     "name": "Staging GCP Project",
     "cloudGroupName": [
-      "staging",
-      "testing"
+      "GCP-Group",
+      "DEV-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": true,
     "scheduleScanEnabled": false,
     "regionList": [
+      "global",
       "us-central1",
       "asia-northeast3",
       "europe-west1"
@@ -93,8 +96,8 @@
     "provider": "AWS",
     "name": "DR AWS Account",
     "cloudGroupName": [
-      "disaster-recovery",
-      "production"
+      "AWS-Group",
+      "PROD-Group"
     ],
     "eventProcessEnabled": false,
     "userActivityEnabled": false,
@@ -106,6 +109,7 @@
       "minute": "0"
     },
     "regionList": [
+      "global",
       "eu-west-1",
       "ap-southeast-1"
     ],
@@ -121,9 +125,8 @@
     "provider": "AZURE",
     "name": "Production Azure Main",
     "cloudGroupName": [
-      "production",
-      "critical",
-      "compliance"
+      "AZURE-Group",
+      "PROD-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": true,
@@ -134,6 +137,7 @@
       "minute": "30"
     },
     "regionList": [
+      "global",
       "eastus2",
       "westus2",
       "northeurope",
@@ -156,8 +160,8 @@
     "provider": "GCP",
     "name": "Production GCP Main",
     "cloudGroupName": [
-      "production",
-      "critical"
+      "GCP-Group",
+      "PROD-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": true,
@@ -168,6 +172,7 @@
       "minute": "30"
     },
     "regionList": [
+      "global",
       "us-central1",
       "us-east1",
       "asia-northeast3"
@@ -187,13 +192,14 @@
     "provider": "AWS",
     "name": "Test Environment",
     "cloudGroupName": [
-      "testing",
-      "non-production"
+      "AWS-Group",
+      "DEV-Group"
     ],
     "eventProcessEnabled": false,
     "userActivityEnabled": false,
     "scheduleScanEnabled": false,
     "regionList": [
+      "global",
       "us-east-1"
     ],
     "credentials": {
@@ -207,8 +213,8 @@
     "provider": "AZURE",
     "name": "QA Azure Environment",
     "cloudGroupName": [
-      "qa",
-      "testing"
+      "AZURE-Group",
+      "DEV-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": false,
@@ -220,6 +226,7 @@
       "minute": "0"
     },
     "regionList": [
+      "global",
       "eastus",
       "koreacentral"
     ],
@@ -239,12 +246,14 @@
     "provider": "GCP",
     "name": "Development GCP Project",
     "cloudGroupName": [
-      "development"
+      "GCP-Group",
+      "DEV-Group"
     ],
     "eventProcessEnabled": false,
     "userActivityEnabled": false,
     "scheduleScanEnabled": false,
     "regionList": [
+      "global",
       "us-west1",
       "asia-northeast3"
     ],
@@ -258,8 +267,8 @@
     "provider": "AWS",
     "name": "Analytics AWS Account",
     "cloudGroupName": [
-      "analytics",
-      "production"
+      "AWS-Group",
+      "PROD-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": true,
@@ -269,6 +278,7 @@
       "minute": "0"
     },
     "regionList": [
+      "global",
       "us-west-2",
       "eu-central-1",
       "ap-northeast-1"
@@ -288,8 +298,7 @@
     "provider": "AWS",
     "name": "Security AWS Account",
     "cloudGroupName": [
-      "security",
-      "compliance"
+      "AWS-Group"
     ],
     "eventProcessEnabled": true,
     "userActivityEnabled": true,
@@ -301,6 +310,7 @@
       "minute": "45"
     },
     "regionList": [
+      "global",
       "us-east-1",
       "eu-central-1"
     ],
@@ -311,121 +321,6 @@
     "credentialType": "ACCESS_KEY",
     "eventSource": {
       "cloudTrailName": "company-security-trail"
-    }
-  },
-  {
-    "id": "cloud-012",
-    "provider": "AZURE",
-    "name": "Backup Azure Subscription",
-    "cloudGroupName": [
-      "backup",
-      "production"
-    ],
-    "eventProcessEnabled": false,
-    "userActivityEnabled": false,
-    "scheduleScanEnabled": true,
-    "scheduleScanSetting": {
-      "frequency": "MONTH",
-      "date": "15",
-      "hour": "2",
-      "minute": "15"
-    },
-    "regionList": [
-      "westus",
-      "eastasia"
-    ],
-    "credentials": {
-      "tenantId": "backup12-****-****-****-********3456",
-      "subscriptionId": "subbkup1-****-****-****-********2345",
-      "applicationId": "appbkup2-****-****-****-********3456",
-      "secretKey": "backupSecret********xyz"
-    },
-    "credentialType": "SERVICE_PRINCIPAL"
-  },
-  {
-    "id": "cloud-013",
-    "provider": "GCP",
-    "name": "ML Training GCP Project",
-    "cloudGroupName": [
-      "ml",
-      "training"
-    ],
-    "eventProcessEnabled": true,
-    "userActivityEnabled": false,
-    "scheduleScanEnabled": true,
-    "scheduleScanSetting": {
-      "frequency": "HOUR",
-      "minute": "30"
-    },
-    "regionList": [
-      "us-central1",
-      "asia-southeast1"
-    ],
-    "credentials": {
-      "projectId": "company-ml-567890",
-      "jsonText": "{\"type\":\"service_account\",\"project_id\":\"company-ml-567890\",\"private_key_id\":\"ml1234****9876\",\"private_key\":\"-----BEGIN PRIVATE KEY-----\\nML********key\\n-----END PRIVATE KEY-----\",\"client_email\":\"ml-sa@company-ml-567890.iam.gserviceaccount.com\"}"
-    },
-    "credentialType": "JSON_TEXT",
-    "eventSource": {
-      "storageAccountName": "company-ml-logs"
-    }
-  },
-  {
-    "id": "cloud-014",
-    "provider": "AWS",
-    "name": "Legacy AWS Account",
-    "cloudGroupName": [
-      "legacy"
-    ],
-    "eventProcessEnabled": false,
-    "userActivityEnabled": false,
-    "scheduleScanEnabled": true,
-    "scheduleScanSetting": {
-      "frequency": "MONTH",
-      "date": "28",
-      "hour": "3",
-      "minute": "0"
-    },
-    "regionList": [
-      "us-east-1"
-    ],
-    "credentials": {
-      "accessKeyId": "AKIA********11",
-      "secretAccessKey": "legacy********Key"
-    },
-    "credentialType": "ACCESS_KEY"
-  },
-  {
-    "id": "cloud-015",
-    "provider": "AZURE",
-    "name": "Partner Azure Tenant",
-    "cloudGroupName": [
-      "partner",
-      "external"
-    ],
-    "eventProcessEnabled": true,
-    "userActivityEnabled": true,
-    "scheduleScanEnabled": true,
-    "scheduleScanSetting": {
-      "frequency": "WEEK",
-      "weekday": "WED",
-      "hour": "12",
-      "minute": "0"
-    },
-    "regionList": [
-      "japaneast",
-      "australiaeast"
-    ],
-    "proxyUrl": "https://partner-proxy.company.com:8443",
-    "credentials": {
-      "tenantId": "partner1-****-****-****-********2345",
-      "subscriptionId": "subpart1-****-****-****-********3456",
-      "applicationId": "apppart2-****-****-****-********4567",
-      "secretKey": "partnerSecret********abc"
-    },
-    "credentialType": "SERVICE_PRINCIPAL",
-    "eventSource": {
-      "storageAccountName": "partnerlogs"
     }
   }
 ]

@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { PlusIcon } from 'lucide-react';
 
@@ -13,8 +15,12 @@ import {
 } from '@/src/components/ui/table';
 import cloudData from '@/src/data/cloude-data.json';
 import { Button } from '@/src/components/ui/button';
+import CloudDialog from '@/src/components/CloudDialog';
 
-const CloudeManagementTable = () => {
+const CloudManagementTable = () => {
+  const [isOpenCloudDialog, setIsOpenCloudDialog] = useState(false);
+  const [selectedCloudId, setSelectedCloudId] = useState<string | undefined>();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -33,6 +39,10 @@ const CloudeManagementTable = () => {
           </h2>
           <Button
             size={'lg'}
+            onClick={() => {
+              setSelectedCloudId(undefined);
+              setIsOpenCloudDialog(true);
+            }}
             className={'bg-blue-500 hover:bg-blue-600 text-lg'}
           >
             <PlusIcon /> 생성하기
@@ -100,7 +110,14 @@ const CloudeManagementTable = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant={'outline'} size={'sm'}>
+                    <Button
+                      onClick={() => {
+                        setSelectedCloudId(cloud.id);
+                        setIsOpenCloudDialog(true);
+                      }}
+                      variant={'outline'}
+                      size={'sm'}
+                    >
                       수정
                     </Button>
                   </TableCell>
@@ -110,8 +127,13 @@ const CloudeManagementTable = () => {
           </Table>
         </div>
       </main>
+      <CloudDialog
+        open={isOpenCloudDialog}
+        onOpenChange={setIsOpenCloudDialog}
+        cloudId={selectedCloudId}
+      />
     </div>
   );
 };
 
-export default CloudeManagementTable;
+export default CloudManagementTable;

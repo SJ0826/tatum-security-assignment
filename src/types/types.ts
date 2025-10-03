@@ -1,6 +1,6 @@
 // ==========================📌 제공받은 타입===========================
 
-type Provider = 'AWS' | 'AZURE' | 'GCP'; // 프로바이더 예시, AWS만 활성화
+export type Provider = 'AWS' | 'AZURE' | 'GCP'; // 프로바이더 예시, AWS만 활성화
 
 export const AWSRegionList = [
   'global',
@@ -25,7 +25,7 @@ export const AWSRegionList = [
 
 type AWSCredentialType = 'ACCESS_KEY' | 'ASSUME_ROLE' | 'ROLES_ANYWHERE'; // AWS 크리덴셜 타입 예시, ACCESS_KEY만 활성화
 
-interface AWSCredential {
+export interface AWSCredential {
   accessKeyId: string;
   secretAccessKey: string;
   roleArn?: string;
@@ -60,7 +60,7 @@ interface GCPEventSource {
   storageAccountName?: string;
 }
 
-interface ScheduleScanSetting {
+export interface ScheduleScanSetting {
   /**
    * frequency에 따라 각 필드의 필수 여부가 변경됨. 어떤 필드가 필수로 올지는 자유롭게 선택
    * HOUR  : 매시간을 의미
