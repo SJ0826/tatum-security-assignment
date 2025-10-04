@@ -60,7 +60,7 @@
       "applicationId": "app12345-****-****-****-********6789",
       "secretKey": "secretValue********xyz"
     },
-    "credentialType": "SERVICE_PRINCIPAL",
+    "credentialType": "APPLICATION",
     "eventSource": {
       "storageAccountName": "companydevlogs"
     }
@@ -118,7 +118,7 @@
       "secretAccessKey": "xYz9********Ab",
       "roleArn": "arn:aws:iam::123456789012:role/DrRole"
     },
-    "credentialType": "ASSUME_ROLE"
+    "credentialType": "ACCESS_KEY"
   },
   {
     "id": "cloud-005",
@@ -150,7 +150,7 @@
       "applicationId": "appfedcb-****-****-****-********a987",
       "secretKey": "prodSecret********abc"
     },
-    "credentialType": "SERVICE_PRINCIPAL",
+    "credentialType": "APPLICATION",
     "eventSource": {
       "storageAccountName": "companyprodlogs"
     }
@@ -236,7 +236,7 @@
       "applicationId": "appqa456-****-****-****-********7890",
       "secretKey": "qaSecret********123"
     },
-    "credentialType": "SERVICE_PRINCIPAL",
+    "credentialType": "APPLICATION",
     "eventSource": {
       "storageAccountName": "companyqalogs"
     }

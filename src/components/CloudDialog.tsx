@@ -17,9 +17,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/src/components/ui/select';
-import { Cloud, Provider, AWSCredential } from '@/src/types/types';
+import {
+  AWSCredentialType,
+  AWSEventSource,
+  AzureCredentialType,
+  AzureEventSource,
+  Cloud,
+  GCPCredentialType,
+  GCPEventSource,
+  Provider,
+} from '@/src/types/types';
 import cloudData from '@/src/data/cloude-data.json';
 import ScanScheduleSection from '@/src/components/ScanScheduleSection';
+import { CredentialsForm } from '@/src/components/credentials/CredentialsForm';
+import { DEFAULT_CREDENTIALS } from '@/src/components/credentials/defaults';
 
 // Constants
 const CLOUD_GROUPS = [
@@ -47,6 +58,13 @@ interface CloudDialogProps {
   cloudId?: string | undefined; // 전달되는 Id가 존재하면 수정모드
 }
 
+// API 호출을 시뮬레이션하는 비동기 함수 (0~500ms 딜레이)
+const fetchCloudData = async (id: string): Promise<Cloud | undefined> => {
+  const delay = Math.random() * 500; // 0~500ms 랜덤 딜레이
+  await new Promise(resolve => setTimeout(resolve, delay));
+  return cloudData.find(c => c.id === id) as Cloud | undefined;
+};
+
 const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
   const isEditMode = !!cloudId;
   const [formData, setFormData] = useState<Partial<Cloud>>({
@@ -57,11 +75,10 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
     userActivityEnabled: false,
     scheduleScanEnabled: false,
     regionList: [],
-    credentials: {
-      accessKeyId: '',
-      secretAccessKey: '',
-    },
+    credentials: DEFAULT_CREDENTIALS.AWS,
+    credentialType: 'ACCESS_KEY',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const toggleGroup = (group: string) => {
     setFormData(prev => ({
@@ -90,25 +107,35 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
   };
 
   useEffect(() => {
-    if (cloudId) {
-      const cloud = cloudData.find(c => c.id === cloudId);
+    const loadCloudData = async () => {
+      if (cloudId) {
+        setIsLoading(true);
+        try {
+          const cloud = await fetchCloudData(cloudId);
+          if (cloud) setFormData(cloud);
+        } catch (error) {
+          console.error('Failed to load cloud data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // 생성 모드일 때 초기화 - 필수 리전 자동 포함
+        setFormData({
+          provider: 'AWS',
+          name: '',
+          cloudGroupName: [],
+          eventProcessEnabled: true,
+          userActivityEnabled: false,
+          scheduleScanEnabled: false,
+          regionList: REQUIRED_REGIONS,
+          credentials: DEFAULT_CREDENTIALS.AWS,
+          credentialType: 'ACCESS_KEY',
+        });
+      }
+    };
 
-      if (cloud) setFormData(cloud as Cloud);
-    } else {
-      // 생성 모드일 때 초기화 - 필수 리전 자동 포함
-      setFormData({
-        provider: 'AWS',
-        name: '',
-        cloudGroupName: [],
-        eventProcessEnabled: true,
-        userActivityEnabled: false,
-        scheduleScanEnabled: false,
-        regionList: REQUIRED_REGIONS,
-        credentials: {
-          accessKeyId: '',
-          secretAccessKey: '',
-        },
-      });
+    if (open) {
+      loadCloudData();
     }
   }, [cloudId, open]);
   return (
@@ -120,184 +147,256 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
             {isEditMode ? 'Edit Cloud' : 'Create Cloud'}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-6 py-4">
-          {/* 📝 Cloud Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              Cloud Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              placeholder="Please enter the cloud name"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="transition-all focus:ring-2 focus:ring-blue-500"
-            />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-gray-500">Loading...</div>
           </div>
-
-          {/* 📝 Provider */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Select Provider</Label>
-            <Select
-              value={formData.provider ?? ''}
-              onValueChange={value =>
-                setFormData({ ...formData, provider: value as Provider })
-              }
-            >
-              <SelectTrigger className="transition-all hover:border-gray-400">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AWS">AWS</SelectItem>
-                <SelectItem value="Azure" disabled>
-                  Azure (Coming Soon)
-                </SelectItem>
-                <SelectItem value="GCP" disabled>
-                  GCP (Coming Soon)
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 📝 Cloud Groups - Multi Select */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Cloud Groups</Label>
-            <div className="border rounded-md p-3 space-y-2 bg-gray-50">
-              {CLOUD_GROUPS.map(group => (
-                <div key={group} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id={group}
-                    checked={formData.cloudGroupName?.includes(group)}
-                    onChange={() => toggleGroup(group)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <label
-                    htmlFor={group}
-                    className="text-sm cursor-pointer hover:text-blue-600"
-                  >
-                    {group}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 📝 Credentials */}
-          <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Credentials</Label>
-            </div>
-
+        ) : (
+          <div className="space-y-6 py-4">
+            {/* 📝 Cloud Name */}
             <div className="space-y-2">
-              <Label htmlFor="accessKeyId" className="text-sm">
-                Access Key ID <span className="text-red-500">*</span>
+              <Label htmlFor="name" className="text-sm font-medium">
+                Cloud Name <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="accessKeyId"
-                placeholder="AKIA..."
-                value={
-                  (formData.credentials as AWSCredential)?.accessKeyId || ''
-                }
+                id="name"
+                placeholder="Please enter the cloud name"
+                value={formData.name}
                 onChange={e =>
-                  setFormData({
-                    ...formData,
-                    credentials: {
-                      ...(formData.credentials as AWSCredential),
-                      accessKeyId: e.target.value,
-                    },
-                  })
+                  setFormData({ ...formData, name: e.target.value })
                 }
+                className="transition-all focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
+            {/* 📝 Provider */}
             <div className="space-y-2">
-              <Label htmlFor="secretAccessKey" className="text-sm">
-                Secret Access Key <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="secretAccessKey"
-                type="password"
-                placeholder="Enter secret access key"
-                value={
-                  (formData.credentials as AWSCredential)?.secretAccessKey || ''
-                }
-                onChange={e =>
+              <Label className="text-sm font-medium">Select Provider</Label>
+              <Select
+                value={formData.provider ?? ''}
+                onValueChange={value => {
+                  const newProvider = value as Provider;
+                  const credentialTypeMap = {
+                    AWS: 'ACCESS_KEY' as AWSCredentialType,
+                    AZURE: 'APPLICATION' as AzureCredentialType,
+                    GCP: 'JSON_TEXT' as GCPCredentialType,
+                  };
+                  console.log(newProvider);
                   setFormData({
                     ...formData,
-                    credentials: {
-                      ...(formData.credentials as AWSCredential),
-                      secretAccessKey: e.target.value,
-                    },
-                  })
-                }
-              />
+                    provider: newProvider,
+                    credentials: DEFAULT_CREDENTIALS[newProvider],
+                    credentialType: credentialTypeMap[newProvider],
+                  });
+                }}
+              >
+                <SelectTrigger className="transition-all hover:border-gray-400">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AWS">AWS</SelectItem>
+                  <SelectItem value="AZURE" disabled>
+                    Azure (Coming Soon)
+                  </SelectItem>
+                  <SelectItem value="GCP" disabled>
+                    GCP (Coming Soon)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
 
-          {/* 📝 Regions - Multi Select */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              Region <span className="text-gray-400">(global 포함 필수)</span>
-            </Label>
-            <div className="border rounded-md p-3 space-y-2 bg-gray-50 max-h-48 overflow-y-auto">
-              {AWS_REGIONS.map(region => {
-                const isRequired = REQUIRED_REGIONS.includes(region);
-                return (
-                  <div key={region} className="flex items-center gap-2">
+            {/* 📝 Cloud Groups - Multi Select */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Cloud Groups</Label>
+              <div className="border rounded-md p-3 space-y-2 bg-gray-50">
+                {CLOUD_GROUPS.map(group => (
+                  <div key={group} className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      id={region}
-                      checked={formData.regionList?.includes(region)}
-                      onChange={() => toggleRegion(region)}
-                      disabled={isRequired}
-                      className={`w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
-                        isRequired
-                          ? 'cursor-not-allowed opacity-60'
-                          : 'cursor-pointer'
-                      }`}
+                      id={group}
+                      checked={formData.cloudGroupName?.includes(group)}
+                      onChange={() => toggleGroup(group)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                     <label
-                      htmlFor={region}
-                      className={`text-sm ${
-                        isRequired
-                          ? 'cursor-not-allowed text-gray-600'
-                          : 'cursor-pointer hover:text-blue-600'
-                      }`}
+                      htmlFor={group}
+                      className="text-sm cursor-pointer hover:text-blue-600"
                     >
-                      {region}
-                      {isRequired && (
-                        <span className="ml-2 text-xs text-red-500">
-                          (필수)
-                        </span>
-                      )}
+                      {group}
                     </label>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 📝 Scan Schedule */}
-          <ScanScheduleSection formData={formData} setFormData={setFormData} />
-
-          {/* 📝 Proxy URL */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="proxy" className="text-sm font-medium">
-                Proxy URL
+            {/* 📝 Credential Type */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Credential Type <span className="text-red-500">*</span>
               </Label>
+              <Select
+                value={formData.credentialType ?? ''}
+                onValueChange={value =>
+                  setFormData({
+                    ...formData,
+                    credentialType: value as
+                      | AWSCredentialType
+                      | AzureCredentialType
+                      | GCPCredentialType,
+                  })
+                }
+              >
+                <SelectTrigger className="transition-all hover:border-gray-400">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.provider === 'AWS' && (
+                    <>
+                      <SelectItem value="ACCESS_KEY">Access Key</SelectItem>
+                      <SelectItem value="'ASSUME_ROLE'">Assume Role</SelectItem>
+                      <SelectItem value="ROLES_ANYWHERE">
+                        Roles Anywhere
+                      </SelectItem>
+                    </>
+                  )}
+                  {formData.provider === 'AZURE' && (
+                    <SelectItem value="APPLICATION">Application</SelectItem>
+                  )}
+                  {formData.provider === 'GCP' && (
+                    <SelectItem value="JSON_TEXT">JSON Text</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-            <Input
-              id="proxy"
-              placeholder="Please enter the proxy URL"
-              value={formData.proxyUrl || ''}
-              onChange={e =>
-                setFormData({ ...formData, proxyUrl: e.target.value })
+
+            {/* 📝 Credentials */}
+            <CredentialsForm
+              provider={formData.provider || 'AWS'}
+              credentials={formData.credentials!}
+              onChange={newCredentials =>
+                setFormData({ ...formData, credentials: newCredentials })
               }
             />
+
+            {/* 📝 Regions - Multi Select */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Region <span className="text-gray-400">(global 포함 필수)</span>
+              </Label>
+              <div className="border rounded-md p-3 space-y-2 bg-gray-50 max-h-48 overflow-y-auto">
+                {AWS_REGIONS.map(region => {
+                  const isRequired = REQUIRED_REGIONS.includes(region);
+                  return (
+                    <div key={region} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={region}
+                        checked={formData.regionList?.includes(region)}
+                        onChange={() => toggleRegion(region)}
+                        disabled={isRequired}
+                        className={`w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+                          isRequired
+                            ? 'cursor-not-allowed opacity-60'
+                            : 'cursor-pointer'
+                        }`}
+                      />
+                      <label
+                        htmlFor={region}
+                        className={`text-sm ${
+                          isRequired
+                            ? 'cursor-not-allowed text-gray-600'
+                            : 'cursor-pointer hover:text-blue-600'
+                        }`}
+                      >
+                        {region}
+                        {isRequired && (
+                          <span className="ml-2 text-xs text-red-500">
+                            (필수)
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 📝 Scan Schedule */}
+            <ScanScheduleSection
+              formData={formData}
+              setFormData={setFormData}
+            />
+
+            {/* 📝 Event Source */}
+            {formData.provider === 'AWS' && (
+              <div className="space-y-2">
+                <Label htmlFor="cloudTrailName" className="text-sm font-medium">
+                  CloudTrail Name
+                </Label>
+                <Input
+                  id="cloudTrailName"
+                  placeholder="Please enter the CloudTrail name"
+                  value={
+                    (formData.eventSource as AWSEventSource)?.cloudTrailName ||
+                    ''
+                  }
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      eventSource: {
+                        cloudTrailName: e.target.value,
+                      } as AWSEventSource,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            {(formData.provider === 'AZURE' || formData.provider === 'GCP') && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="storageAccountName"
+                  className="text-sm font-medium"
+                >
+                  Storage Account Name
+                </Label>
+                <Input
+                  id="storageAccountName"
+                  placeholder="Please enter the storage account name"
+                  value={
+                    (formData.eventSource as AzureEventSource | GCPEventSource)
+                      ?.storageAccountName || ''
+                  }
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      eventSource: {
+                        storageAccountName: e.target.value,
+                      } as AzureEventSource | GCPEventSource,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            {/* 📝 Proxy URL */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="proxy" className="text-sm font-medium">
+                  Proxy URL
+                </Label>
+              </div>
+              <Input
+                id="proxy"
+                placeholder="Please enter the proxy URL"
+                value={formData.proxyUrl || ''}
+                onChange={e =>
+                  setFormData({ ...formData, proxyUrl: e.target.value })
+                }
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <DialogFooter className="gap-2">
           <Button
@@ -310,6 +409,7 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
           <Button
             onClick={handleSubmit}
             className="bg-blue-600 hover:bg-blue-700"
+            disabled={isLoading}
           >
             {isEditMode ? '수정하기' : '생성하기'}
           </Button>

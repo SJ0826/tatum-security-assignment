@@ -23,7 +23,7 @@ export const AWSRegionList = [
   'us-west-2',
 ] as const;
 
-type AWSCredentialType = 'ACCESS_KEY' | 'ASSUME_ROLE' | 'ROLES_ANYWHERE'; // AWS 크리덴셜 타입 예시, ACCESS_KEY만 활성화
+export type AWSCredentialType = 'ACCESS_KEY' | 'ASSUME_ROLE' | 'ROLES_ANYWHERE'; // AWS 크리덴셜 타입 예시, ACCESS_KEY만 활성화
 
 export interface AWSCredential {
   accessKeyId: string;
@@ -31,32 +31,32 @@ export interface AWSCredential {
   roleArn?: string;
 }
 
-interface AWSEventSource {
+export interface AWSEventSource {
   cloudTrailName?: string;
 }
 
 // 타 프로바이더 예시, 미사용
-type AzureCredentialType = 'APPLICATION';
+export type AzureCredentialType = 'APPLICATION';
 
-interface AzureCredential {
+export interface AzureCredential {
   tenantId: string;
   subscriptionId: string;
   applicationId: string;
   secretKey: string;
 }
 
-interface AzureEventSource {
+export interface AzureEventSource {
   storageAccountName?: string;
 }
 
-type GCPCredentialType = 'JSON_TEXT';
+export type GCPCredentialType = 'JSON_TEXT';
 
-interface GCPCredential {
+export interface GCPCredential {
   projectId?: string;
   jsonText: string;
 }
 
-interface GCPEventSource {
+export interface GCPEventSource {
   storageAccountName?: string;
 }
 
@@ -98,3 +98,5 @@ export interface Cloud {
    */
   eventSource?: AWSEventSource | AzureEventSource | GCPEventSource;
 }
+
+// credentials 확장 타입
