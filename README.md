@@ -1,10 +1,12 @@
 # Tatum Security Assignment
 
-## 개요
+## ◾️ 개요
 
 클라우드 보안 스캔 관리 시스템입니다. AWS, GCP, Azure 등 멀티 클라우드 환경에 대한 보안 스캔 스케줄을 설정하고 관리할 수 있습니다.
 
-## 프로젝트 실행 방법
+<br />
+
+## ◾️ 프로젝트 실행 방법
 
 ```bash
 # 의존성 설치
@@ -22,7 +24,9 @@ npm start
 
 개발 서버 실행 후 [http://localhost:3000](http://localhost:3000)에서 확인할 수 있습니다.
 
-## 기술 문서
+<br />
+
+## ◾️ 기술 문서
 
 ### 다량의 API 관리 방법
 
@@ -220,6 +224,8 @@ export function ScanList() {
 - **에러 핸들링**: React Query의 `onError`, `useQueryErrorResetBoundary`와 Error Boundary 조합
 - **캐싱 전략**: staleTime과 cacheTime을 데이터 특성에 맞게 설정
 
+<br />
+
 ### i18n 적용 방안
 
 #### Google Spreadsheet 기반 번역 관리 시스템
@@ -317,7 +323,9 @@ jobs:
 - 동기화 타이밍을 개발팀에서 제어 가능
 - Spreadsheet의 필터/정렬 기능으로 번역 누락 확인 용이
 
-## 설계 및 구현
+<br />
+
+## ◾️ 설계 및 구현
 
 ### 컴포넌트 확장성
 
@@ -421,6 +429,8 @@ export const DEFAULT_CREDENTIALS = {
 
 - 타입에 새 옵션 추가 시 TypeScript가 누락된 케이스를 컴파일 타임에 검출
 - 기본값이 `defaults.ts`에 중앙화되어 있어 일관성 유지 용이
+
+<br />
 
 ### UX 센스
 
