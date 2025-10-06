@@ -18,11 +18,14 @@ import {
   SelectValue,
 } from '@/src/components/ui/select';
 import {
+  AWSCredential,
   AWSCredentialType,
   AWSEventSource,
+  AzureCredential,
   AzureCredentialType,
   AzureEventSource,
   Cloud,
+  GCPCredential,
   GCPCredentialType,
   GCPEventSource,
   Provider,
@@ -79,6 +82,7 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
     credentialType: 'ACCESS_KEY',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const toggleGroup = (group: string) => {
     setFormData(prev => ({
@@ -99,11 +103,87 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
         ? prev.regionList.filter(r => r !== region)
         : [...(prev.regionList || []), region],
     }));
+
+    // Region 에러 초기화
+    if (errors.regionList) {
+      setErrors(prev => ({ ...prev, regionList: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // 필수값 검증
+    if (!formData.name?.trim()) {
+      newErrors.name = 'Cloud Name은 필수입니다.';
+    }
+
+    if (!formData.regionList || formData.regionList.length === 0) {
+      newErrors.regionList = '최소 1개의 Region을 선택해주세요.';
+    }
+
+    // AWS Credentials 필수값 검증
+    if (formData.provider === 'AWS') {
+      const awsCred = formData.credentials as AWSCredential;
+      if (!awsCred?.accessKeyId?.trim()) {
+        newErrors.accessKeyId = 'Access Key ID는 필수입니다.';
+      }
+      if (!awsCred?.secretAccessKey?.trim()) {
+        newErrors.secretAccessKey = 'Secret Access Key는 필수입니다.';
+      }
+    }
+
+    // AZURE Credentials 필수값 검증
+    if (formData.provider === 'AZURE') {
+      const azureCred = formData.credentials as AzureCredential;
+      if (!azureCred?.tenantId?.trim()) {
+        newErrors.tenantId = 'Tenant ID는 필수입니다.';
+      }
+      if (!azureCred?.subscriptionId?.trim()) {
+        newErrors.subscriptionId = 'Subscription ID는 필수입니다.';
+      }
+      if (!azureCred?.applicationId?.trim()) {
+        newErrors.applicationId = 'Application ID는 필수입니다.';
+      }
+      if (!azureCred?.secretKey?.trim()) {
+        newErrors.secretKey = 'Secret Key는 필수입니다.';
+      }
+    }
+
+    // GCP Credentials 필수값 검증
+    if (formData.provider === 'GCP') {
+      const gcpCred = formData.credentials as GCPCredential;
+      if (!gcpCred?.jsonText?.trim()) {
+        newErrors.jsonText = 'JSON Text는 필수입니다.';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
-    // await mockApiCall(payload);
+    if (!validateForm()) {
+      return;
+    }
+
+    // id는 서버에서 생성되므로 생성 모드에서는 제외
+    const submitData = isEditMode ? formData : { ...formData };
+    if (!isEditMode && 'id' in submitData) {
+      delete (submitData as { id?: string }).id;
+    }
+
+    // await mockApiCall(submitData);
+    // eslint-disable-next-line no-console
+    console.log(
+      `\n${'='.repeat(50)}\n[${isEditMode ? '수정' : '생성'}] Cloud ${isEditMode ? 'Updated' : 'Created'}\n${'='.repeat(50)}`
+    );
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(submitData, null, 2));
+    // eslint-disable-next-line no-console
+    console.log('='.repeat(50) + '\n');
     onOpenChange(false);
+    setErrors({});
   };
 
   useEffect(() => {
@@ -140,8 +220,8 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
   }, [cloudId, open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={'max-h-[500px] overflow-y-auto'}>
-        <DialogHeader>
+      <DialogContent className={'max-h-[90vh] overflow-hidden flex flex-col'}>
+        <DialogHeader className="sticky top-1 bg-white z-10 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <span className="text-blue-600">☁️</span>
             {isEditMode ? 'Edit Cloud' : 'Create Cloud'}
@@ -152,7 +232,7 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
             <div className="text-gray-500">Loading...</div>
           </div>
         ) : (
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-4 overflow-y-auto flex-1 px-2">
             {/* 📝 Cloud Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
@@ -162,11 +242,19 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
                 id="name"
                 placeholder="Please enter the cloud name"
                 value={formData.name}
-                onChange={e =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="transition-all focus:ring-2 focus:ring-blue-500"
+                onChange={e => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (errors.name) {
+                    setErrors(prev => ({ ...prev, name: '' }));
+                  }
+                }}
+                className={`transition-all focus:ring-2 focus:ring-blue-500 ${
+                  errors.name ? 'border-red-500' : ''
+                }`}
               />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name}</p>
+              )}
             </div>
 
             {/* 📝 Provider */}
@@ -208,7 +296,7 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
             {/* 📝 Cloud Groups - Multi Select */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Cloud Groups</Label>
-              <div className="border rounded-md p-3 space-y-2 bg-gray-50">
+              <div className="border rounded-md p-3 space-y-2 bg-white">
                 {CLOUD_GROUPS.map(group => (
                   <div key={group} className="flex items-center gap-2">
                     <input
@@ -270,20 +358,82 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
             </div>
 
             {/* 📝 Credentials */}
-            <CredentialsForm
-              provider={formData.provider || 'AWS'}
-              credentials={formData.credentials!}
-              onChange={newCredentials =>
-                setFormData({ ...formData, credentials: newCredentials })
-              }
-            />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Credentials <span className="text-red-500">*</span>
+              </Label>
+              <div className="border rounded-md p-3 space-y-3 bg-white">
+                <CredentialsForm
+                  provider={formData.provider || 'AWS'}
+                  credentials={formData.credentials!}
+                  onChange={newCredentials => {
+                    setFormData({ ...formData, credentials: newCredentials });
+                    // Credentials 에러 초기화
+                    setErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.accessKeyId;
+                      delete newErrors.secretAccessKey;
+                      delete newErrors.tenantId;
+                      delete newErrors.subscriptionId;
+                      delete newErrors.applicationId;
+                      delete newErrors.secretKey;
+                      delete newErrors.jsonText;
+                      return newErrors;
+                    });
+                  }}
+                />
+              </div>
+              {/* Credentials 에러 메시지 */}
+              {(errors.accessKeyId ||
+                errors.secretAccessKey ||
+                errors.tenantId ||
+                errors.subscriptionId ||
+                errors.applicationId ||
+                errors.secretKey ||
+                errors.jsonText) && (
+                <div className="space-y-1">
+                  {errors.accessKeyId && (
+                    <p className="text-sm text-red-500">{errors.accessKeyId}</p>
+                  )}
+                  {errors.secretAccessKey && (
+                    <p className="text-sm text-red-500">
+                      {errors.secretAccessKey}
+                    </p>
+                  )}
+                  {errors.tenantId && (
+                    <p className="text-sm text-red-500">{errors.tenantId}</p>
+                  )}
+                  {errors.subscriptionId && (
+                    <p className="text-sm text-red-500">
+                      {errors.subscriptionId}
+                    </p>
+                  )}
+                  {errors.applicationId && (
+                    <p className="text-sm text-red-500">
+                      {errors.applicationId}
+                    </p>
+                  )}
+                  {errors.secretKey && (
+                    <p className="text-sm text-red-500">{errors.secretKey}</p>
+                  )}
+                  {errors.jsonText && (
+                    <p className="text-sm text-red-500">{errors.jsonText}</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* 📝 Regions - Multi Select */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">
-                Region <span className="text-gray-400">(global 포함 필수)</span>
+                Region <span className="text-red-500">*</span>{' '}
+                <span className="text-gray-400">(global 포함 필수)</span>
               </Label>
-              <div className="border rounded-md p-3 space-y-2 bg-gray-50 max-h-48 overflow-y-auto">
+              <div
+                className={`border rounded-md p-3 space-y-2 bg-white max-h-48 overflow-y-auto ${
+                  errors.regionList ? 'border-red-500' : ''
+                }`}
+              >
                 {AWS_REGIONS.map(region => {
                   const isRequired = REQUIRED_REGIONS.includes(region);
                   return (
@@ -319,6 +469,9 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
                   );
                 })}
               </div>
+              {errors.regionList && (
+                <p className="text-sm text-red-500">{errors.regionList}</p>
+              )}
             </div>
 
             {/* 📝 Scan Schedule */}
@@ -398,7 +551,7 @@ const CloudDialog = ({ open, onOpenChange, cloudId }: CloudDialogProps) => {
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="sticky bottom-0 bg-white z-10 pt-4 border-t gap-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

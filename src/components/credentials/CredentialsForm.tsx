@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { Label } from '@/src/components/ui/label';
 import {
   AWSCredential,
   AzureCredential,
@@ -27,10 +26,7 @@ export const CredentialsForm = ({
   disabled = false,
 }: CredentialsFormProps) => {
   return (
-    <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-      <div className="flex items-center gap-2">
-        <Label className="text-sm font-medium">Credentials</Label>
-      </div>
+    <>
       {provider === 'AWS' && (
         <AWSCredentialsForm
           credentials={credentials as AWSCredential}
@@ -52,6 +48,6 @@ export const CredentialsForm = ({
           disabled={disabled}
         />
       )}
-    </div>
+    </>
   );
 };
